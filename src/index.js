@@ -126,7 +126,7 @@ function CSOS(options) {
   }
 
   async function bootNotification() {
-    const { payload } = sendCall('BootNotification', options);
+    const { payload } = await sendCall('BootNotification', options);
     const status = _.get(payload, 'status');
     const interval = _.get(payload, 'interval', 90);
 
