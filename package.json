@@ -1,0 +1,42 @@
+{
+  "name": "pointsim-csos",
+  "version": "1.0.0",
+  "description": "CSOS is a core framework for building charge-points, real or virtual",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "npm run lint && mocha",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pSnehanshu/pointsim-csos.git"
+  },
+  "keywords": [
+    "ocpp",
+    "ev",
+    "e-mobility",
+    "chargepoint",
+    "chargestations",
+    "charge",
+    "stations",
+    "ocpp1.6",
+    "ocpp1.5"
+  ],
+  "author": "Snehanshu Phukon <hello@snehanshu.tech>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pSnehanshu/pointsim-csos/issues"
+  },
+  "homepage": "https://github.com/pSnehanshu/pointsim-csos#readme",
+  "dependencies": {
+    "lodash": "^4.17.20"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^7.8.1",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "mocha": "^8.1.3"
+  }
+}
