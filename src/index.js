@@ -1,6 +1,5 @@
 const _ = require('lodash');
 const retry = require('async-retry');
-const doWhilst = require('async/doWhilst');
 const SentCallsManager = require('./managers/sent');
 const ReceivedCallsManager = require('./managers/received');
 const transportLanguage = require('./utils/transportLanguage');
@@ -91,33 +90,12 @@ function CSOS(options) {
     receivedCallsHandler.add(action, handler);
   }
 
-  async function bootNotification() {
-    const { payload } = await sendCall('BootNotification', options);
-    const status = _.get(payload, 'status');
-    const interval = _.get(payload, 'interval', 90);
-    const intervalMS = _.multiply(interval, 1000);
-
-    if (status === 'Accepted') {
-      // Start heartbeat loop in interval
-      doWhilst(
-        () => sendCall('Heartbeat'),
-        // The minimum pause between two heartbeats
-        (response, callback) => setTimeout(() => callback(null), intervalMS),
-        _.noop,
-      );
-    } else {
-      // Retry connection in interval
-      setTimeout(bootNotification, intervalMS);
-    }
-  }
-
   // return object at the end
   return {
     connected,
     disconnected,
     received,
     sendCall,
-    bootNotification,
     onCall,
     fresh: () => CSOS(options),
   };
