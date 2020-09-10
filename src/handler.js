@@ -1,11 +1,25 @@
 const _ = require('lodash');
 
+/**
+ * This function returns the actual received  OCPP messages handler.
+ * @param {Function} parser OCPP message parser function
+ * @param {Object} sentCallsHandler It should have properties `success` and `error`, both functions
+ * @param {Function} callHandler A function that handles received CALLS
+ * @param {Function} sender A function that can send OCPP messages
+ * @param {Object} builders It should have properties `callResult` and `callError`, both functions
+ * @returns A handler function
+ */
 function MessageHandler(parser, sentCallsHandler, callHandler, sender, builders) {
-  return (message) => {
+  /**
+   * Handler function that returns a thunk
+   * @param {String} message The OCPP message received
+   * @returns Thunk that when executed performs the actual task
+   */
+  return function handler(message) {
     const parsed = parser(message);
     switch (parsed.type) {
       case 'CALL':
-        callHandler(parsed.action, parsed.payload, {
+        return () => callHandler(parsed.action, parsed.payload, {
           callResult(payload) {
             // Send response using the sender
             const message2send = _.invoke(builders, 'callResult', parsed.id, payload);
@@ -16,20 +30,18 @@ function MessageHandler(parser, sentCallsHandler, callHandler, sender, builders)
           callError(code, description, details) {
             // Send response using the sender
             const message2send = _.invoke(builders, 'callError', parsed.id, code, description, details);
-            if (!_.isUndefined) {
+            if (!_.isUndefined(message2send)) {
               sender(message2send);
             }
           },
         });
-        break;
       case 'CALLRESULT':
-        sentCallsHandler.success(parsed.id, parsed.payload);
-        break;
+        return () => sentCallsHandler.success(parsed.id, parsed.payload);
       case 'CALLERROR':
-        sentCallsHandler.error(parsed.id, parsed.payload);
-        break;
+        return () => sentCallsHandler.error(parsed.id, parsed.payload);
       default:
-      // ignore
+        // ignore
+        return _.noop;
     }
   };
 }

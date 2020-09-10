@@ -10,13 +10,15 @@ const OCPPJParser = require('./parsers/json');
 const OCPPSParser = require('./parsers/soap');
 const MessageHandler = require('./handler');
 
+const noopthunk = () => _.noop;
+
 function CSOS(options) {
   const sentCallsHandler = SentCallsManager();
   const receivedCallsHandler = ReceivedCallsManager();
   let currentVersion = null;
   let isConnected = false;
   let sender = _.noop;
-  let msgHandler = _.noop;
+  let msgHandler = noopthunk;
   let builders = {};
 
   const language = () => transportLanguage(currentVersion);
@@ -26,7 +28,7 @@ function CSOS(options) {
       throw new Error('Not connected to central system yet');
     }
     // Handle this message
-    msgHandler(message);
+    msgHandler(message)();
   }
 
   function connected(version) {
@@ -55,7 +57,7 @@ function CSOS(options) {
     currentVersion = null;
     sender = _.noop;
     builders = {};
-    msgHandler = _.noop;
+    msgHandler = noopthunk;
   }
 
   /**
