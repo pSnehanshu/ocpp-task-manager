@@ -133,6 +133,14 @@ function CSOS(options) {
     sender = _.noop;
   }
 
+  /**
+   * when sending call fails, it will reject with an error,
+   * otherwise when an CALL ERROR is received, it will reject
+   * with an ocpp message
+   *
+   * @param {String} action
+   * @param {Object} payload
+   */
   async function sendCall(action, payload) {
     return new Promise((resolve, reject) => {
       if (!isConnected) {
@@ -147,6 +155,7 @@ function CSOS(options) {
         })
         .catch((error) => {
           // failed permanently
+          reject(new Error(`The CALL couldn't be sent: ${_.get(error, 'message', _.toString(error))}`));
         });
     });
   }
