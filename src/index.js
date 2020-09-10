@@ -3,13 +3,46 @@ const fp = require('lodash/fp');
 const { nanoid } = require('nanoid');
 const retry = require('async-retry');
 
-/* function extractVersion(options) {
-  const versions = _.get(options, 'versions', []);
-  if (_.every(versions, String)) {
-    return _.toArray(versions);
-  }
-  return [];
-} */
+function formCall(version, action, payload) {
+  const language = transportLanguage(version);
+  return {
+    message: 'Not implemented',
+    id: nanoid(10),
+  };
+}
+
+function OCPPJParser(message) {
+  return {
+    type: 'CALLRESLT',
+    id: 'the unique id',
+    payload: {},
+  };
+}
+
+function OCPPSParser(message) {
+  return {
+    type: 'CALLRESLT',
+    id: 'the unique id',
+    payload: {},
+  };
+}
+
+function MessageHandler(parser, callManager) {
+  return (message) => {
+    const parsed = parser(message);
+    switch (parsed.type) {
+      case 'CALL': break;
+      case 'CALLRESULT':
+        callManager.success(parsed.id, parsed.payload);
+        break;
+      case 'CALLERROR':
+        callManager.error(parsed.id, parsed.payload);
+        break;
+      default:
+      // ignore
+    }
+  };
+}
 
 function extractSender(options, version) {
   return fp.pipe(
@@ -35,14 +68,6 @@ const transportLanguage = fp.pipe(
     [fp.stubTrue, _.constant(null)],
   ]),
 );
-
-function formCall(version, action, payload) {
-  const language = transportLanguage(version);
-  return {
-    message: 'Not implemented',
-    id: nanoid(10),
-  };
-}
 
 function SentCallsManager(intialStore = {}) {
   const store = _.cloneDeep(intialStore);
@@ -73,13 +98,28 @@ function SentCallsManager(intialStore = {}) {
 }
 
 function CSOS(options) {
-  // const versions = extractVersion(options);
   const callManager = SentCallsManager();
   let currentVersion = null;
   let isConnected = false;
   let sender = _.noop;
-
   const language = () => transportLanguage(currentVersion);
+
+  const msgHandler = (() => {
+    let parser = _.noop;
+    const lang = language();
+    if (lang === 'JSON') parser = OCPPJParser;
+    else if (lang === 'SOAP') parser = OCPPSParser;
+
+    return MessageHandler(parser, callManager);
+  })();
+
+  function received(message) {
+    if (!isConnected) {
+      throw new Error('Not connected to central system yet');
+    }
+    // Handle this message
+    msgHandler(message);
+  }
 
   function connected(version) {
     currentVersion = version;
@@ -91,20 +131,6 @@ function CSOS(options) {
     currentVersion = null;
     isConnected = false;
     sender = _.noop;
-  }
-
-  function received(message) {
-    if (!isConnected) {
-      throw new Error('Not connected to central system yet');
-    }
-    // Record that this message was received
-    switch (language()) {
-      case 'JSON':
-        // Parse the JSON message
-        break;
-      case 'SOAP':
-      default:
-    }
   }
 
   async function sendCall(action, payload) {
@@ -145,6 +171,7 @@ function CSOS(options) {
     received,
     sendCall,
     bootNotification,
+    fresh: () => CSOS(options),
   };
 }
 
