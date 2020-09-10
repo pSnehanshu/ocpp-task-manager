@@ -2,8 +2,9 @@ const _ = require('lodash');
 const fp = require('lodash/fp');
 const { nanoid } = require('nanoid');
 const retry = require('async-retry');
+const doWhilst = require('async/doWhilst');
 
-function formCall(version, action, payload) {
+function formCall(version, action, payload = {}) {
   const language = transportLanguage(version);
   return {
     message: 'Not implemented',
@@ -164,12 +165,19 @@ function CSOS(options) {
     const { payload } = await sendCall('BootNotification', options);
     const status = _.get(payload, 'status');
     const interval = _.get(payload, 'interval', 90);
+    const intervalMS = _.multiply(interval, 1000);
 
     if (status === 'Accepted') {
       // Start heartbeat loop in interval
+      doWhilst(
+        () => sendCall('Heartbeat'),
+        // The minimum pause between two heartbeats
+        (response, callback) => setTimeout(() => callback(null), intervalMS),
+        _.noop,
+      );
     } else {
       // Retry connection in interval
-      setTimeout(bootNotification, _.multiply(interval, 1000));
+      setTimeout(bootNotification, intervalMS);
     }
   }
 
