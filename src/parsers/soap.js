@@ -1,4 +1,4 @@
-function OCPPSParser(message) {
+function OCPPSParser(/* message */) {
   return {
     type: 'CALLRESULT',
     id: 'the unique id',
