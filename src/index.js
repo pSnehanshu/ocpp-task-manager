@@ -1,5 +1,6 @@
 const _ = require('lodash');
 const retry = require('async-retry');
+const { nanoid } = require('nanoid');
 const SentCallsManager = require('./managers/sent');
 const ReceivedCallsManager = require('./managers/received');
 const transportLanguage = require('./utils/transportLanguage');
@@ -34,7 +35,7 @@ function CSOS(options) {
     isConnected = true;
     currentVersion = version;
     sender = extractSender(options, currentVersion);
-    builders = getBuilders(currentVersion);
+    builders = getBuilders(currentVersion, () => nanoid(10));
     msgHandler = (() => {
       let parser = _.noop;
       const lang = language();

@@ -1,10 +1,9 @@
 const _ = require('lodash');
-const { nanoid } = require('nanoid');
 const transportLanguage = require('../utils/transportLanguage');
 
-function call(version, action, payload = {}) {
+function call(version, action, payload = {}, uniqueIdGenerator) {
   const language = transportLanguage(version);
-  const uniqueId = nanoid(10);
+  const uniqueId = uniqueIdGenerator();
 
   switch (language) {
     case 'JSON': return {

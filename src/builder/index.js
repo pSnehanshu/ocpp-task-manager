@@ -2,10 +2,10 @@ const call = require('./call');
 const callResult = require('./callResult');
 const callError = require('./callError');
 
-function builder(version) {
+function builder(version, uniqueIdGenerator) {
   return {
     call(action, payload) {
-      return call(version, action, payload);
+      return call(version, action, payload, uniqueIdGenerator);
     },
     callResult(id, payload) {
       return callResult(version, id, payload);
