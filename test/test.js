@@ -38,8 +38,7 @@ describe('Builder', function () {
         const parsed = JSON.parse(message);
 
         expect(id).to.equal(uniqueId);
-        expect(parsed).to.be.an('array');
-        expect(parsed).to.have.length(4);
+        expect(parsed).to.be.an('array').of.length(4);
         expect(parsed[0]).to.equal(2);
         expect(parsed[1]).to.equal(uniqueId);
         expect(parsed[2]).to.equal(action);
@@ -48,6 +47,54 @@ describe('Builder', function () {
 
       it('should throw error for invalid OCPP version', function () {
         expect(() => invalidCall('Reset', { type: 'Soft' })).to.throw();
+      });
+    });
+
+    describe('callResult', function () {
+      it('should return correct OCPP message', function () {
+        const payload = { currentTimestamp: (new Date).toISOString() };
+
+        const { id, message } = callResult(uniqueId, payload);
+        const parsed = JSON.parse(message);
+
+        expect(id).to.equal(uniqueId);
+        expect(parsed).to.be.an('array').of.length(3);
+        expect(parsed[0]).to.equal(3);
+        expect(parsed[1]).to.equal(uniqueId);
+        expect(parsed[2]).to.eql(payload);
+      });
+
+      it('should throw error for invalid OCPP version', function () {
+        expect(() => invalidCallResult(uniqueId, { status: 'Accepted' })).to.throw();
+      });
+    });
+
+    describe('callError', function () {
+      it('should return correct OCPP message', function () {
+        const errorCode = 'NotImplemented';
+        const errorDescription = 'This feature has not been implemented yet';
+        const errorDetails = {
+          type: 4,
+          dummy: {
+            a: 1,
+            isFull: false,
+          }
+        };
+
+        const { id, message } = callError(uniqueId, errorCode, errorDescription, errorDetails);
+        const parsed = JSON.parse(message);
+
+        expect(id).to.equal(uniqueId);
+        expect(parsed).to.be.an('array').of.length(5);
+        expect(parsed[0]).to.equal(4);
+        expect(parsed[1]).to.equal(uniqueId);
+        expect(parsed[2]).to.equal(errorCode);
+        expect(parsed[3]).to.equal(errorDescription);
+        expect(parsed[4]).to.eql(errorDetails);
+      });
+
+      it('should throw error for invalid OCPP version', function () {
+        expect(() => invalidCallError(uniqueId, 'InternalError', '', {})).to.throw();
       });
     });
   })
