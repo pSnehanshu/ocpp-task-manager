@@ -1,5 +1,5 @@
 {
-  "name": "pointsim-csos",
+  "name": "ocpp-task-manager",
   "version": "1.0.0",
   "description": "CSOS is a core framework for building charge-points, real or virtual",
   "main": "src/index.js",
