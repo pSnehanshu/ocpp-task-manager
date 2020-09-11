@@ -25,7 +25,7 @@ function CSOS(options) {
 
   function received(message) {
     if (!isConnected) {
-      throw new Error('Not connected to central system yet');
+      throw new Error('Not connected yet, please call `connected()`');
     }
     // Handle this message
     msgHandler(message)();
@@ -71,7 +71,7 @@ function CSOS(options) {
   async function sendCall(action, payload) {
     return new Promise((resolve, reject) => {
       if (!isConnected) {
-        return reject(new Error('Not connected to central system yet'));
+        return reject(new Error('Not connected yet, please call `connected()`'));
       }
 
       const { message, id } = builders.call(action, payload);
