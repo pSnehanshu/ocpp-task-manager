@@ -1,14 +1,12 @@
 const _ = require('lodash');
-const fp = require('lodash/fp');
+
+function senderNotFound(version) {
+  throw new Error(`No sender defined for ${_.toString(version)}`);
+}
 
 function extractSender(options, version) {
-  return fp.pipe(
-    fp.get(`senders.${version}`),
-    _.cond([
-      [_.isFunction, _.identity],
-      [_.stubTrue, _.noop],
-    ]),
-  )(options);
+  const sender = _.get(options, `senders['${version}']`);
+  return _.isFunction(sender) ? sender : () => senderNotFound(version);
 }
 
 module.exports = extractSender;
