@@ -52,7 +52,7 @@ You must also pass the version of OCPP which is to be used for the current conne
 
 ```javascript
 // Assuming `ocppVersion` variable holds the OCPP version in string format
-device.received(ocppVersion);
+device.connected(ocppVersion);
 ```
 
 If a connection was disconnected, notify using
