@@ -12,7 +12,7 @@ const MessageHandler = require('./handler');
 
 const noopthunk = () => _.noop;
 
-function CSOS(options) {
+function OCPPTaskManager(options) {
   const sentCallsHandler = SentCallsManager();
   const receivedCallsHandler = ReceivedCallsManager();
   let currentVersion = null;
@@ -98,8 +98,8 @@ function CSOS(options) {
     received,
     sendCall,
     onCall,
-    fresh: () => CSOS(options),
+    fresh: () => OCPPTaskManager(options),
   };
 }
 
-module.exports = CSOS;
+module.exports = OCPPTaskManager;
