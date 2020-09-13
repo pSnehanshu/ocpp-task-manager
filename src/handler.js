@@ -24,14 +24,14 @@ function MessageHandler(parser, sentCallsHandler, callHandler, sender, builders)
             // Send response using the sender
             const message2send = _.invoke(builders, 'callResult', parsed.id, payload);
             if (!_.isUndefined(message2send)) {
-              sender(message2send);
+              sender(message2send.message);
             }
           },
           callError(code, description, details) {
             // Send response using the sender
             const message2send = _.invoke(builders, 'callError', parsed.id, code, description, details);
             if (!_.isUndefined(message2send)) {
-              sender(message2send);
+              sender(message2send.message);
             }
           },
         });
