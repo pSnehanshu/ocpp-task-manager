@@ -5,6 +5,8 @@ const { nanoid } = require('nanoid');
 const transportLanguage = require('../src/utils/transportLanguage');
 const Builder = require('../src/builder');
 const OCPPJParser = require('../src/parsers/json');
+const ReceivedCallsManager = require('../src/managers/received');
+const SentCallsManager = require('../src/managers/sent');
 
 describe('TransportLanguage utility', function () {
   it('should return null for invalid OCPP version', function () {
@@ -160,6 +162,168 @@ describe('Parser', function () {
       expect(OCPPJParser(invalid1).type).to.be.null;
       expect(OCPPJParser(invalid2).type).to.be.null;
       expect(OCPPJParser(invalid3).type).to.be.null;
+    });
+  });
+});
+
+describe('Managers', function () {
+  describe('Received Manager', function () {
+    it ('should execute the given handler', function (done) {
+      const manager = ReceivedCallsManager();
+      const action = 'Heatbeat';
+      const handler = () => done();
+      
+      manager.add(action, handler);
+      manager.execute(action);
+    });
+
+    it ('should execute the given handler with appropriate arguments', function (done) {
+      const manager = ReceivedCallsManager();
+      const action = 'Heatbeat';
+      const providedArgs = ['Hello', 'World', { a: 123 }];
+      const handler = (...receivedArgs) => {
+        expect(receivedArgs).to.eql(providedArgs);
+        done();
+      };
+      
+      manager.add(action, handler);
+      manager.execute(action, ...providedArgs);
+    });
+
+    it('should return the return value of the handler', function () {
+      const manager = ReceivedCallsManager();
+      const action = 'Heatbeat';
+      const value2return = ['Hello', 'World', { a: 123 }];
+      const handler = () => value2return;
+
+      manager.add(action, handler);
+      const returnedValue = manager.execute(action);
+
+      expect(returnedValue).to.eql(value2return);
+    });
+
+    it('should not call a handler once it is removed', function () {
+      const manager = ReceivedCallsManager();
+      const action = 'Heatbeat';
+      const handler = () => { throw new Error('Not supposed to be called') };
+
+      manager.add(action, handler);
+      manager.remove(action);
+      manager.execute(action);
+    });
+  });
+
+  describe('Sent Manager', function () {
+    it('should call the success handler', function (done) {
+      const manager = SentCallsManager();
+      const uniqueId = nanoid(5);
+      const success = () => done();
+      const failure = () => done();
+
+      manager.add(uniqueId, success, failure);
+      manager.success(uniqueId);
+    });
+
+    it('should call the failure handler', function (done) {
+      const manager = SentCallsManager();
+      const uniqueId = nanoid(5);
+      const success = () => done();
+      const failure = () => done();
+
+      manager.add(uniqueId, success, failure);
+      manager.failure(uniqueId);
+    });
+
+    it('should pass the given argument to onSuccess', function (done) {
+      const manager = SentCallsManager();
+      const uniqueId = nanoid(5);
+      const providedArgs = ['Hello', 'World', { a: 123 }];;
+      const success = (...receivedArgs) => {
+        expect(receivedArgs).to.eql(providedArgs);
+        done()
+      };
+      const failure = () => {};
+
+      manager.add(uniqueId, success, failure);
+      manager.success(uniqueId, ...providedArgs);
+    });
+
+    it('should pass the given argument to onFailure', function (done) {
+      const manager = SentCallsManager();
+      const uniqueId = nanoid(5);
+      const providedArgs = ['Hello', 'World', { a: 123 }];;
+      const failure = (...receivedArgs) => {
+        expect(receivedArgs).to.eql(providedArgs);
+        done()
+      };
+      const success = () => {};
+
+      manager.add(uniqueId, success, failure);
+      manager.failure(uniqueId, ...providedArgs);
+    });
+
+    it('should return the return value of onSuccess', function () {
+      const manager = SentCallsManager();
+      const uniqueId = nanoid(5);
+      const value2return = nanoid(5);
+      const success = () => value2return;
+      const failure = () => {};
+
+      manager.add(uniqueId, success, failure);
+      const returnedValue = manager.success(uniqueId);
+
+      expect(returnedValue).to.eql(value2return);
+    });
+
+    it('should return the return value of onFailure', function () {
+      const manager = SentCallsManager();
+      const uniqueId = nanoid(5);
+      const value2return = nanoid(5);
+      const failure = () => value2return;
+      const success = () => {};
+
+      manager.add(uniqueId, success, failure);
+      const returnedValue = manager.failure(uniqueId);
+
+      expect(returnedValue).to.eql(value2return);
+    });
+
+    it('should not call onSuccess or onFailure after removing', function () {
+      const manager = SentCallsManager();
+      const uniqueId = nanoid(5);
+      const success = () => { throw new Error('onSuccess was called') };
+      const failure = () => { throw new Error('onFailure was called') };
+
+      manager.add(uniqueId, success, failure);
+      manager.remove(uniqueId);
+      manager.success(uniqueId);
+      manager.failure(uniqueId);
+    });
+
+    it('should not call onSuccess/onFailure once onSuccess was called', function (done) {
+      const manager = SentCallsManager();
+      const uniqueId = nanoid(5);
+      const success = () => done();
+      const failure = () => done();
+
+      manager.add(uniqueId, success, failure);
+      manager.success(uniqueId);
+
+      manager.success(uniqueId);
+      manager.failure(uniqueId);
+    });
+
+    it('should not call onSuccess/onFailure once onFailure was called', function (done) {
+      const manager = SentCallsManager();
+      const uniqueId = nanoid(5);
+      const success = () => done();
+      const failure = () => done();
+
+      manager.add(uniqueId, success, failure);
+      manager.failure(uniqueId);
+
+      manager.success(uniqueId);
+      manager.failure(uniqueId);
     });
   });
 });
