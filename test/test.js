@@ -3,22 +3,47 @@ const { nanoid } = require('nanoid');
 
 // Ours
 const transportLanguage = require('../src/utils/transportLanguage');
+const extractSender = require('../src/utils/extractSender');
 const Builder = require('../src/builder');
 const OCPPJParser = require('../src/parsers/json');
 const ReceivedCallsManager = require('../src/managers/received');
 const SentCallsManager = require('../src/managers/sent');
 
-describe('TransportLanguage utility', function () {
-  it('should return null for invalid OCPP version', function () {
-    expect(transportLanguage('invalid version')).to.be.a('null');
+describe('utils', function () {
+  describe('TransportLanguage', function () {
+    it('should return null for invalid OCPP version', function () {
+      expect(transportLanguage('invalid version')).to.be.a('null');
+    });
+
+    it('should return JSON for OCPP1.5j', function () {
+      expect(transportLanguage('ocpp1.5j')).to.equal('JSON');
+    });
+
+    it('should return SOAP for OCPP1.5s', function () {
+      expect(transportLanguage('ocpp1.5s')).to.equal('SOAP');
+    });
   });
 
-  it('should return JSON for OCPP1.5j', function () {
-    expect(transportLanguage('ocpp1.5j')).to.equal('JSON');
-  });
+  describe('ExtractSender', function () {
+    it('should correctly extract the given sender', function (done) {
+      const providedMessage = '[2, "e4r5w", "Heartbeat", {}]';
+      const providedVersion = 'ocpp1.6j';
+      const options = {
+        sender(message, version) {
+          expect(message).to.be.a('string').to.equal(providedMessage);
+          expect(version).to.be.a('string').to.equal(providedVersion);
+          done();
+        }
+      };
 
-  it('should return SOAP for OCPP1.5s', function () {
-    expect(transportLanguage('ocpp1.5s')).to.equal('SOAP');
+      const sender = extractSender(options);
+      sender(providedMessage, providedVersion);
+    });
+
+    it('should throw if no sender was provided', function () {
+      const sender = extractSender({});
+      expect(sender).to.throw();
+    });
   });
 });
 
