@@ -26,20 +26,15 @@ depending on what you are building.
 const OCPPTaskManager = require('ocpp-task-manager');
 
 const device = OCPPTaskManager({
-  senders: {
-    'ocpp1.5s': (message) => {
-      // define how to send the message for OCPP 1.5 SOAP
-    },
-    'ocpp1.6j': (message) => {
-      // define how to send the message for OCPP 1.6 JSON
-    }
-  }
+  sender: (message, version) => {
+    // define how to send the message for the given OCPP version
+  },
 });
-
 ```
 
-Here, we define `senders` for all the versions we want to support. Your sender will receive a `message` parameter, which
-is a `String`, whose contents you shouldn't care about. Just send it!
+Here, we define a `sender` function which will receive a `message` parameter, which
+is a `String`, whose contents you shouldn't care about. Just send it! The `version`
+parameter stores the current active OCPP version, as defined in `device.connected`.
 
 Similarly, you will also have to let to know OCPP Task Manager when a message is received from the other entity. You can do it in the following way.
 

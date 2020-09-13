@@ -17,11 +17,14 @@ function OCPPTaskManager(options) {
   const receivedCallsHandler = ReceivedCallsManager();
   let currentVersion = null;
   let isConnected = false;
-  let sender = _.noop;
   let msgHandler = noopthunk;
   let builders = {};
 
   const language = () => transportLanguage(currentVersion);
+
+  // Configuring sender
+  const sender = extractSender(options);
+  const send = (message) => sender(message, currentVersion);
 
   function received(message) {
     if (!isConnected) {
@@ -34,7 +37,6 @@ function OCPPTaskManager(options) {
   function connected(version) {
     isConnected = true;
     currentVersion = version;
-    sender = extractSender(options, currentVersion);
     builders = getBuilders(currentVersion, () => nanoid(10));
     msgHandler = (() => {
       let parser = _.noop;
@@ -46,7 +48,7 @@ function OCPPTaskManager(options) {
         parser,
         sentCallsHandler,
         receivedCallsHandler.execute,
-        sender,
+        send,
         builders,
       );
     })();
@@ -55,7 +57,6 @@ function OCPPTaskManager(options) {
   function disconnected() {
     isConnected = false;
     currentVersion = null;
-    sender = _.noop;
     builders = {};
     msgHandler = noopthunk;
   }
@@ -75,7 +76,7 @@ function OCPPTaskManager(options) {
       }
 
       const { message, id } = builders.call(action, payload);
-      return retry(() => sender(message))
+      return retry(() => send(message))
         .then(() => {
           // Record the id
           sentCallsHandler.add(id, resolve, reject);
