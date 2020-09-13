@@ -90,4 +90,66 @@ device.sendCall(action, payload)
 
 ## Examples
 
-Coming soon... check GitHub repo for most updated documentation.
+### Charge point simulator
+
+```javascript
+const OCPPTaskManager = require('ocpp-task-manager');
+const WebSocket = require('ws'); // npm install ws
+
+// Establishing a connection
+const ws = new WebSocket('ws://example.com/ocpp/CP001'); // Where CP001 is the chargepoint unique identifier
+
+// Instantiate your device
+const device = OCPPTaskManager({
+  sender: (message, version) => {
+    ws.send(message)
+  },
+});
+
+// Define what to do when calls are received
+device.onCall('Reset', (payload, { callResult, callError }) => {
+  if (payload.type === 'Hard') {
+    // Some how do a Hard reset, depends on your implementation
+    callResult({ status: 'Accepted' });
+  } else if (type === 'Soft') {
+    // Some how do a Soft reset, depends on your implementation
+    callResult({ status: 'Rejected' });
+  } else {
+    callError('FormationViolation');
+  }
+});
+
+// Similarly define handlers for all the CALLs you want to support
+
+// Notify your device on connection open
+ws.on('open', () => {
+  device.connected('ocpp1.6j');
+
+  // Send boot notification
+  device.sendCall('BootNotification', { /* provide all the necessary payload items */ })
+    .then(response => {
+      if (response.status === 'Accepted') {
+        // Start heartbeat loop
+        setInterval(() => device.sendCall('Heartbeat'), payload.interval * 1000);
+      }
+    })
+    .catch(error => {
+      if (error instanceof Error) {
+        // A connection error happended, try to reconnect
+      } else {
+        // You received a CALL ERROR
+        console.log('CALLERROR received', error.errorCode, error.errorDescription, error.errorDetails);
+      }
+    });
+});
+
+// Notify your device about disconnection
+ws.on('close', () => device.disconnected());
+
+// Pass the received message to you device
+ws.on('message', (data) => {
+  device.received(data);
+});
+```
+
+More examples coming soon...
