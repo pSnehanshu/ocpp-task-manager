@@ -1,5 +1,7 @@
 # OCPP Task manager
 
+[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/pSnehanshu/pointsim-ocpp-task-manager)
+
 A general purpose [OCPP](https://www.openchargealliance.org/) framework 
 that can be used to build anything related to OCPP.
 
