@@ -83,14 +83,15 @@ Sometimes, you may want to send a CALL message to the other entity, here's how y
 ```javascript
 device.sendCall(action, payload)
   .then(response => {
-    // This will run when you receive a CALLRESULT
+    // `response.payload` will contain the Payload received
+    if (response.ok) {
+      // You received a CALLRESULT
+    } else {
+      // You received a CALLERROR
+    }
   })
   .catch(error => {
-    if (error instanceof Error) {
-      // Most probably, your "sender" wasn't able to send the message
-    } else {
-      // This will run when you receive a CALLERROR
-    }
+    // Handle error, this was thrown by your sender
   });
 ```
 
@@ -134,18 +135,23 @@ ws.on('open', () => {
   // Send boot notification
   device.sendCall('BootNotification', { /* provide all the necessary payload items */ })
     .then(response => {
-      if (response.status === 'Accepted') {
-        // Start heartbeat loop
-        setInterval(() => device.sendCall('Heartbeat'), payload.interval * 1000);
+      if (response.ok) {
+        if (response.payload.status === 'Accepted') {
+          // Start heartbeat loop
+          setInterval(() => device.sendCall('Heartbeat'), payload.interval * 1000);
+        }
+      } else {
+        // You received a CALLERROR
+        console.log(
+          'CALLERROR received',
+          response.payload.errorCode,
+          response.payload.errorDescription,
+          response.payload.errorDetails
+        );
       }
     })
     .catch(error => {
-      if (error instanceof Error) {
-        // A connection error happended, try to reconnect
-      } else {
-        // You received a CALL ERROR
-        console.log('CALLERROR received', error.errorCode, error.errorDescription, error.errorDetails);
-      }
+      console.error(error);
     });
 });
 

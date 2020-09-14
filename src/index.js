@@ -85,7 +85,11 @@ function OCPPTaskManager(options) {
       return retry(() => send(message))
         .then(() => {
           // Record the id
-          sentCallsHandler.add(id, resolve, reject);
+          sentCallsHandler.add(
+            id,
+            (data) => resolve({ ok: true, payload: data }),
+            (data) => resolve({ ok: false, payload: data }),
+          );
         })
         .catch((error) => {
           // failed permanently
