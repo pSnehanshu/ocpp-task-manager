@@ -26,6 +26,12 @@ function OCPPTaskManager(options) {
   const sender = extractSender(options);
   const send = (message) => sender(message, currentVersion);
 
+  // Configure call handlers
+  _.map(
+    _.get(options, 'callHandlers', {}),
+    (handler, action) => receivedCallsHandler.add(action, handler),
+  );
+
   function received(message) {
     if (!isConnected) {
       throw new Error('Not connected yet, please call `connected()`');
@@ -88,17 +94,12 @@ function OCPPTaskManager(options) {
     });
   }
 
-  function onCall(action, handler) {
-    receivedCallsHandler.add(action, handler);
-  }
-
   // return object at the end
   return {
     connected,
     disconnected,
     received,
     sendCall,
-    onCall,
     fresh: () => OCPPTaskManager(options),
   };
 }
