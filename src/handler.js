@@ -38,7 +38,7 @@ function MessageHandler(parser, sentCallsHandler, callHandler, sender, builders)
       case 'CALLRESULT':
         return () => sentCallsHandler.success(parsed.id, parsed.payload);
       case 'CALLERROR':
-        return () => sentCallsHandler.error(parsed.id, parsed.payload);
+        return () => sentCallsHandler.failure(parsed.id, parsed.payload);
       default:
         // ignore
         return _.noop;
