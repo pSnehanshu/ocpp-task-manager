@@ -117,3 +117,6 @@ dist
 
 # To try to run it as a user
 use.js
+
+# It's a node_module, so package-lock.json isn't needed
+package-lock.json
