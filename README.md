@@ -36,7 +36,7 @@ const device = OCPPTaskManager({
   // Define the call handlers for all the CALLs you wan't to support
   callHandlers: {
     // Showing just BootNotification for example
-    BootNotification(payload, { callResult, callError }) => {
+    BootNotification: (payload, { callResult, callError }) => {
       // `payload` hold the payload received with the CALL
       // do anything you want with it, although you might want to first sit and plan
 
@@ -113,7 +113,7 @@ const device = OCPPTaskManager({
   },
   // Define what to do when calls are received
   callHandlers: {
-    Reset(payload, { callResult, callError }) => {
+    Reset: (payload, { callResult, callError }) => {
       if (payload.type === 'Hard') {
         // Some how do a Hard reset, depends on your implementation
         callResult({ status: 'Accepted' });
@@ -138,7 +138,7 @@ ws.on('open', () => {
       if (response.ok) {
         if (response.payload.status === 'Accepted') {
           // Start heartbeat loop
-          setInterval(() => device.sendCall('Heartbeat'), payload.interval * 1000);
+          setInterval(() => device.sendCall('Heartbeat'), response.payload.interval * 1000);
         }
       } else {
         // You received a CALLERROR
