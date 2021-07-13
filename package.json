@@ -1,6 +1,6 @@
 {
   "name": "ocpp-task-manager",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A general purpose OCPP framework that can be used to build anything related to OCPP",
   "main": "src/index.js",
   "scripts": {
@@ -23,13 +23,14 @@
     "ocpp1.6",
     "ocpp1.5"
   ],
-  "author": "Snehanshu Phukon <hello@snehanshu.tech>",
+  "author": "Snehanshu Phukon <hello@snehanshu.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/pSnehanshu/ocpp-task-manager/issues"
   },
   "homepage": "https://github.com/pSnehanshu/ocpp-task-manager#readme",
   "dependencies": {
+    "async": "^3.2.0",
     "async-retry": "^1.3.1",
     "lodash": "^4.17.20",
     "nanoid": "^3.1.12"

@@ -9,6 +9,7 @@ const getBuilders = require('./builder');
 const OCPPJParser = require('./parsers/json');
 const OCPPSParser = require('./parsers/soap');
 const MessageHandler = require('./handler');
+const Hooks = require('./utils/hooks');
 
 const noopthunk = () => _.noop;
 
@@ -19,12 +20,16 @@ function OCPPTaskManager(options) {
   let isConnected = false;
   let msgHandler = noopthunk;
   let builders = {};
+  const hooks = new Hooks();
 
   const language = () => transportLanguage(currentVersion);
 
   // Configuring sender
   const sender = extractSender(options);
-  const send = message => sender(message, currentVersion);
+  const send = message =>
+    hooks.execute('sendWsMsg', () => sender(message, currentVersion), {
+      rawMsg: message,
+    });
 
   // Configure call handlers
   _.map(_.get(options, 'callHandlers', {}), (handler, action) =>
@@ -36,7 +41,9 @@ function OCPPTaskManager(options) {
       throw new Error('Not connected yet, please call `connected()`');
     }
     // Handle this message
-    msgHandler(message)();
+    hooks.execute('messageReceived', msgHandler(message), {
+      rawMsg: message,
+    });
   }
 
   function connected(version) {
@@ -55,6 +62,7 @@ function OCPPTaskManager(options) {
         receivedCallsHandler.execute,
         send,
         builders,
+        hooks,
       );
     })();
   }
@@ -83,7 +91,9 @@ function OCPPTaskManager(options) {
       }
 
       const { message, id } = builders.call(action, payload);
-      return retry(() => send(message))
+      return retry(() =>
+        hooks.execute('sendCall', () => send(message), { msg: message }),
+      )
         .then(() => {
           // Record the id
           sentCallsHandler.add(
@@ -113,6 +123,7 @@ function OCPPTaskManager(options) {
     disconnected,
     received,
     sendCall,
+    hooks,
     fresh: () => OCPPTaskManager(options),
   };
 }
