@@ -95,6 +95,31 @@ device
   });
 ```
 
+## Hooks
+
+You can use hooks functionality to run custom code at different life cycles.
+
+```javascript
+device.hooks.before('messageReceived', ({ rawMsg }) => {
+  console.log('Message has been received', rawMsg);
+});
+
+device.hooks.after('sendWsMsg', ({ rawMsg }) => {
+  console.log('Message has been sent', rawMsg);
+});
+```
+
+The following hooks are available
+
+- sendWsMsg
+- sendCallRespond
+- sendCallError
+- executeCallHandler
+- executeCallResultHandler
+- executeCallErrorHandler
+- messageReceived
+- sendCall
+
 ## Examples
 
 ### Charge point simulator
