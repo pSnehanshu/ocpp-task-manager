@@ -24,7 +24,10 @@ function SentCallsManager(intialStore = {}) {
   }
 
   return {
-    add, remove, success, failure,
+    add,
+    remove,
+    success,
+    failure,
   };
 }
 

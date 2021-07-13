@@ -15,7 +15,6 @@ how the messages are sent and received.
 
 [![NPM](https://nodei.co/npm/ocpp-task-manager.png?compact=true)](https://www.npmjs.com/package/ocpp-task-manager)
 
-
 ## Usage
 
 OCPP Task manager being transport layer agnostic, you have to define how to send
@@ -24,7 +23,7 @@ depending on what you are building.
 
 Also, regardless of you are building a Charge point or a central system, your device will
 have to respond to CALL messages, (if you don't know what it is, I highly recommend
-you to read  official OCPP documentation).
+you to read official OCPP documentation).
 
 ```javascript
 const OCPPTaskManager = require('ocpp-task-manager');
@@ -45,7 +44,7 @@ const device = OCPPTaskManager({
       // or with CALLERROR
       callError(errorCode, errorDesciption, errorDetails);
     },
-  }
+  },
 });
 ```
 
@@ -81,7 +80,8 @@ device.disconnected();
 Sometimes, you may want to send a CALL message to the other entity, here's how you will do it,
 
 ```javascript
-device.sendCall(action, payload)
+device
+  .sendCall(action, payload)
   .then(response => {
     // `response.payload` will contain the Payload received
     if (response.ok) {
@@ -109,7 +109,7 @@ const ws = new WebSocket('ws://example.com/ocpp/CP001'); // Where CP001 is the c
 // Instantiate your device
 const device = OCPPTaskManager({
   sender: (message, version) => {
-    ws.send(message)
+    ws.send(message);
   },
   // Define what to do when calls are received
   callHandlers: {
@@ -133,12 +133,18 @@ ws.on('open', () => {
   device.connected('ocpp1.6j');
 
   // Send boot notification
-  device.sendCall('BootNotification', { /* provide all the necessary payload items */ })
+  device
+    .sendCall('BootNotification', {
+      /* provide all the necessary payload items */
+    })
     .then(response => {
       if (response.ok) {
         if (response.payload.status === 'Accepted') {
           // Start heartbeat loop
-          setInterval(() => device.sendCall('Heartbeat'), response.payload.interval * 1000);
+          setInterval(
+            () => device.sendCall('Heartbeat'),
+            response.payload.interval * 1000,
+          );
         }
       } else {
         // You received a CALLERROR
@@ -146,7 +152,7 @@ ws.on('open', () => {
           'CALLERROR received',
           response.payload.errorCode,
           response.payload.errorDescription,
-          response.payload.errorDetails
+          response.payload.errorDetails,
         );
       }
     })
@@ -159,7 +165,7 @@ ws.on('open', () => {
 ws.on('close', () => device.disconnected());
 
 // Pass the received message to you device
-ws.on('message', (data) => {
+ws.on('message', data => {
   device.received(data);
 });
 ```

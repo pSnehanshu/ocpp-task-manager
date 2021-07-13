@@ -33,7 +33,7 @@ describe('utils', function () {
           expect(message).to.be.a('string').to.equal(providedMessage);
           expect(version).to.be.a('string').to.equal(providedVersion);
           done();
-        }
+        },
       };
 
       const sender = extractSender(options);
@@ -54,7 +54,7 @@ describe('Builder', function () {
     const {
       call: invalidCall,
       callResult: invalidCallResult,
-      callError: invalidCallError
+      callError: invalidCallError,
     } = Builder('Invalid OCPP version', () => uniqueId);
 
     describe('call', function () {
@@ -80,7 +80,7 @@ describe('Builder', function () {
 
     describe('callResult', function () {
       it('should return correct OCPP message', function () {
-        const payload = { currentTimestamp: (new Date).toISOString() };
+        const payload = { currentTimestamp: new Date().toISOString() };
 
         const { id, message } = callResult(uniqueId, payload);
         const parsed = JSON.parse(message);
@@ -93,7 +93,9 @@ describe('Builder', function () {
       });
 
       it('should throw error for invalid OCPP version', function () {
-        expect(() => invalidCallResult(uniqueId, { status: 'Accepted' })).to.throw();
+        expect(() =>
+          invalidCallResult(uniqueId, { status: 'Accepted' }),
+        ).to.throw();
       });
     });
 
@@ -106,10 +108,15 @@ describe('Builder', function () {
           dummy: {
             a: 1,
             isFull: false,
-          }
+          },
         };
 
-        const { id, message } = callError(uniqueId, errorCode, errorDescription, errorDetails);
+        const { id, message } = callError(
+          uniqueId,
+          errorCode,
+          errorDescription,
+          errorDetails,
+        );
         const parsed = JSON.parse(message);
 
         expect(id).to.equal(uniqueId);
@@ -122,10 +129,12 @@ describe('Builder', function () {
       });
 
       it('should throw error for invalid OCPP version', function () {
-        expect(() => invalidCallError(uniqueId, 'InternalError', '', {})).to.throw();
+        expect(() =>
+          invalidCallError(uniqueId, 'InternalError', '', {}),
+        ).to.throw();
       });
     });
-  })
+  });
 });
 
 describe('Parser', function () {
@@ -166,7 +175,13 @@ describe('Parser', function () {
         dummy: Math.random() * 10000,
         dummy2: nanoid(5),
       };
-      const msg = JSON.stringify([4, uniqueId, errorCode, errorDescription, errorDetails]);
+      const msg = JSON.stringify([
+        4,
+        uniqueId,
+        errorCode,
+        errorDescription,
+        errorDetails,
+      ]);
 
       const parsed = OCPPJParser(msg);
 
@@ -193,16 +208,16 @@ describe('Parser', function () {
 
 describe('Managers', function () {
   describe('Received Manager', function () {
-    it ('should execute the given handler', function (done) {
+    it('should execute the given handler', function (done) {
       const manager = ReceivedCallsManager();
       const action = 'Heatbeat';
       const handler = () => done();
-      
+
       manager.add(action, handler);
       manager.execute(action);
     });
 
-    it ('should execute the given handler with appropriate arguments', function (done) {
+    it('should execute the given handler with appropriate arguments', function (done) {
       const manager = ReceivedCallsManager();
       const action = 'Heatbeat';
       const providedArgs = ['Hello', 'World', { a: 123 }];
@@ -210,7 +225,7 @@ describe('Managers', function () {
         expect(receivedArgs).to.eql(providedArgs);
         done();
       };
-      
+
       manager.add(action, handler);
       manager.execute(action, ...providedArgs);
     });
@@ -230,7 +245,9 @@ describe('Managers', function () {
     it('should not call a handler once it is removed', function () {
       const manager = ReceivedCallsManager();
       const action = 'Heatbeat';
-      const handler = () => { throw new Error('Not supposed to be called') };
+      const handler = () => {
+        throw new Error('Not supposed to be called');
+      };
 
       manager.add(action, handler);
       manager.remove(action);
@@ -262,10 +279,10 @@ describe('Managers', function () {
     it('should pass the given argument to onSuccess', function (done) {
       const manager = SentCallsManager();
       const uniqueId = nanoid(5);
-      const providedArgs = ['Hello', 'World', { a: 123 }];;
+      const providedArgs = ['Hello', 'World', { a: 123 }];
       const success = (...receivedArgs) => {
         expect(receivedArgs).to.eql(providedArgs);
-        done()
+        done();
       };
       const failure = () => {};
 
@@ -276,10 +293,10 @@ describe('Managers', function () {
     it('should pass the given argument to onFailure', function (done) {
       const manager = SentCallsManager();
       const uniqueId = nanoid(5);
-      const providedArgs = ['Hello', 'World', { a: 123 }];;
+      const providedArgs = ['Hello', 'World', { a: 123 }];
       const failure = (...receivedArgs) => {
         expect(receivedArgs).to.eql(providedArgs);
-        done()
+        done();
       };
       const success = () => {};
 
@@ -316,8 +333,12 @@ describe('Managers', function () {
     it('should not call onSuccess or onFailure after removing', function () {
       const manager = SentCallsManager();
       const uniqueId = nanoid(5);
-      const success = () => { throw new Error('onSuccess was called') };
-      const failure = () => { throw new Error('onFailure was called') };
+      const success = () => {
+        throw new Error('onSuccess was called');
+      };
+      const failure = () => {
+        throw new Error('onFailure was called');
+      };
 
       manager.add(uniqueId, success, failure);
       manager.remove(uniqueId);

@@ -24,12 +24,11 @@ function OCPPTaskManager(options) {
 
   // Configuring sender
   const sender = extractSender(options);
-  const send = (message) => sender(message, currentVersion);
+  const send = message => sender(message, currentVersion);
 
   // Configure call handlers
-  _.map(
-    _.get(options, 'callHandlers', {}),
-    (handler, action) => receivedCallsHandler.add(action, handler),
+  _.map(_.get(options, 'callHandlers', {}), (handler, action) =>
+    receivedCallsHandler.add(action, handler),
   );
 
   function received(message) {
@@ -78,7 +77,9 @@ function OCPPTaskManager(options) {
   async function sendCall(action, payload) {
     return new Promise((resolve, reject) => {
       if (!isConnected) {
-        return reject(new Error('Not connected yet, please call `connected()`'));
+        return reject(
+          new Error('Not connected yet, please call `connected()`'),
+        );
       }
 
       const { message, id } = builders.call(action, payload);
@@ -87,13 +88,21 @@ function OCPPTaskManager(options) {
           // Record the id
           sentCallsHandler.add(
             id,
-            (data) => resolve({ ok: true, payload: data }),
-            (data) => resolve({ ok: false, payload: data }),
+            data => resolve({ ok: true, payload: data }),
+            data => resolve({ ok: false, payload: data }),
           );
         })
-        .catch((error) => {
+        .catch(error => {
           // failed permanently
-          reject(new Error(`The CALL couldn't be sent: ${_.get(error, 'message', _.toString(error))}`));
+          reject(
+            new Error(
+              `The CALL couldn't be sent: ${_.get(
+                error,
+                'message',
+                _.toString(error),
+              )}`,
+            ),
+          );
         });
     });
   }

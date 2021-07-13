@@ -9,7 +9,13 @@ const _ = require('lodash');
  * @param {Object} builders It should have properties `callResult` and `callError`, both functions
  * @returns A handler function
  */
-function MessageHandler(parser, sentCallsHandler, callHandler, sender, builders) {
+function MessageHandler(
+  parser,
+  sentCallsHandler,
+  callHandler,
+  sender,
+  builders,
+) {
   /**
    * Handler function that returns a thunk
    * @param {String} message The OCPP message received
@@ -19,22 +25,35 @@ function MessageHandler(parser, sentCallsHandler, callHandler, sender, builders)
     const parsed = parser(message);
     switch (parsed.type) {
       case 'CALL':
-        return () => callHandler(parsed.action, parsed.payload, {
-          callResult(payload) {
-            // Send response using the sender
-            const message2send = _.invoke(builders, 'callResult', parsed.id, payload);
-            if (!_.isUndefined(message2send)) {
-              sender(message2send.message);
-            }
-          },
-          callError(code, description, details) {
-            // Send response using the sender
-            const message2send = _.invoke(builders, 'callError', parsed.id, code, description, details);
-            if (!_.isUndefined(message2send)) {
-              sender(message2send.message);
-            }
-          },
-        });
+        return () =>
+          callHandler(parsed.action, parsed.payload, {
+            callResult(payload) {
+              // Send response using the sender
+              const message2send = _.invoke(
+                builders,
+                'callResult',
+                parsed.id,
+                payload,
+              );
+              if (!_.isUndefined(message2send)) {
+                sender(message2send.message);
+              }
+            },
+            callError(code, description, details) {
+              // Send response using the sender
+              const message2send = _.invoke(
+                builders,
+                'callError',
+                parsed.id,
+                code,
+                description,
+                details,
+              );
+              if (!_.isUndefined(message2send)) {
+                sender(message2send.message);
+              }
+            },
+          });
       case 'CALLRESULT':
         return () => sentCallsHandler.success(parsed.id, parsed.payload);
       case 'CALLERROR':

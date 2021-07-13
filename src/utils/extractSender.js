@@ -1,7 +1,7 @@
 const _ = require('lodash');
 
 function senderNotFound() {
-  throw new Error('A sender wasn\'t provided');
+  throw new Error("A sender wasn't provided");
 }
 
 function extractSender(options) {
