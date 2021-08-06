@@ -1,17 +1,18 @@
-const _ = require('lodash');
+import _ from 'lodash';
+import type { RawCallType, RawCallResultType, RawCallErrorType, ParsedCallType, ParsedCallResultType, ParsedCallErrorType, InvalidMessageType } from '../types';
 
-const isValidAction = action => _.isString(action);
-const isValidPayload = payload => _.isObject(payload) || _.isNull(payload);
-const isValidUniqueId = uniqueId =>
+const isValidAction = (action: any) => _.isString(action);
+const isValidPayload = (payload: any) => _.isObject(payload) || _.isNull(payload);
+const isValidUniqueId = (uniqueId: any) =>
   _.isString(uniqueId) || _.isNumber(uniqueId);
-const isValidErrorCode = errorCode => _.isString(errorCode);
-const isValidErrorDescription = errorDescription =>
+const isValidErrorCode = (errorCode: any) => _.isString(errorCode);
+const isValidErrorDescription = (errorDescription: any) =>
   _.isString(errorDescription);
-const isValidErrorDetails = errorDetails => _.isObject(errorDetails);
+const isValidErrorDetails = (errorDetails: any) => _.isObject(errorDetails);
 
 const invalidMessage = { type: null };
 
-function parseCall(parsed) {
+function parseCall(parsed: RawCallType): ParsedCallType | InvalidMessageType {
   const uniqueId = _.get(parsed, '1');
   const action = _.get(parsed, '2');
   const payload = _.get(parsed, '3');
@@ -28,7 +29,7 @@ function parseCall(parsed) {
     : invalidMessage;
 }
 
-function parseCallResult(parsed) {
+function parseCallResult(parsed: RawCallResultType): ParsedCallResultType | InvalidMessageType {
   const uniqueId = _.get(parsed, '1');
   const payload = _.get(parsed, '2');
 
@@ -42,7 +43,7 @@ function parseCallResult(parsed) {
     : invalidMessage;
 }
 
-function parseCallError(parsed) {
+function parseCallError(parsed: RawCallErrorType): ParsedCallErrorType | InvalidMessageType {
   const uniqueId = _.get(parsed, '1');
   const errorCode = _.get(parsed, '2');
   const errorDescription = _.get(parsed, '3');
@@ -65,7 +66,7 @@ function parseCallError(parsed) {
     : invalidMessage;
 }
 
-function OCPPJParser(message) {
+function OCPPJParser(message: string) {
   const parsed = _.attempt(JSON.parse, message);
   if (_.isError(parsed)) {
     return invalidMessage;
@@ -74,17 +75,17 @@ function OCPPJParser(message) {
     return invalidMessage;
   }
 
-  const msgTypeId = _.chain(parsed).get('0').toSafeInteger().value();
+  const msgTypeId = _.chain(parsed).get(0).toSafeInteger().value();
   switch (msgTypeId) {
     case 2:
-      return parseCall(parsed);
+      return parseCall(parsed as RawCallType);
     case 3:
-      return parseCallResult(parsed);
+      return parseCallResult(parsed as RawCallResultType);
     case 4:
-      return parseCallError(parsed);
+      return parseCallError(parsed as RawCallErrorType);
     default:
       return invalidMessage;
   }
 }
 
-module.exports = OCPPJParser;
+export default OCPPJParser;

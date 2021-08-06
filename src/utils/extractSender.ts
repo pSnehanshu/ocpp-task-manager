@@ -1,12 +1,12 @@
-const _ = require('lodash');
+import _ from 'lodash';
 
-function senderNotFound() {
+function senderNotFound(): never {
   throw new Error("A sender wasn't provided");
 }
 
-function extractSender(options) {
+function extractSender(options: { sender: Function }) {
   const sender = _.get(options, 'sender');
   return _.isFunction(sender) ? sender : () => senderNotFound();
 }
 
-module.exports = extractSender;
+export default extractSender;

@@ -1,15 +1,13 @@
-const _ = require('lodash');
-const async = require('async');
+import _ from 'lodash';
+import async from 'async';
 
 class Hook {
-  constructor() {
-    this.hooks = {
-      /* hookName: {
-        before: [], // List of functions, signature: function (info:Object) {}
-        after: [], // List of functions, signature: function (info:Object, result:Any) {}
-      } */
-    };
-  }
+  hooks = {
+    /* hookName: {
+      before: [], // List of functions, signature: function (info:Object) {}
+      after: [], // List of functions, signature: function (info:Object, result:Any) {}
+    } */
+  };
 
   static getBeforeKey(hookName = '') {
     return `["${hookName}"].before`;
@@ -20,48 +18,48 @@ class Hook {
   }
 
   getBefore(hookName = '') {
-    const key = this.constructor.getBeforeKey(hookName);
+    const key = Hook.getBeforeKey(hookName);
     let hooks = _.get(this.hooks, key, []);
     if (!Array.isArray(hooks)) hooks = [hooks];
     return hooks;
   }
 
   getAfter(hookName = '') {
-    const key = this.constructor.getAfterKey(hookName);
+    const key = Hook.getAfterKey(hookName);
     let hooks = _.get(this.hooks, key, []);
     if (!Array.isArray(hooks)) hooks = [hooks];
     return hooks;
   }
 
-  before(hookName, hookFn = () => {}) {
+  before(hookName: string, hookFn = () => {}) {
     const exsiting = this.getBefore(hookName);
-    _.set(this.hooks, this.constructor.getBeforeKey(hookName), [
+    _.set(this.hooks, Hook.getBeforeKey(hookName), [
       ...exsiting,
       hookFn,
     ]);
   }
 
-  after(hookName, hookFn = () => {}) {
+  after(hookName: string, hookFn: Function) {
     const exsiting = this.getAfter(hookName);
 
-    _.set(this.hooks, this.constructor.getAfterKey(hookName), [
+    _.set(this.hooks, Hook.getAfterKey(hookName), [
       ...exsiting,
       hookFn,
     ]);
   }
 
-  async execute(hookName, task = () => {}, info) {
+  async execute<Info, Result>(hookName: string, task: Function, info: Info) {
     /*
     1. Execute "beforeHooks" in serial manner
     2. Execute "afterHooks" in serial manner
     */
 
     await this.executeBefore(hookName, info);
-    const result = await task();
+    const result = (await task()) as Result;
     return this.executeAfter(hookName, info, result);
   }
 
-  executeBefore(hookName, info) {
+  executeBefore<Info>(hookName: string, info: Info) {
     return new Promise((resolve, reject) => {
       if (!hookName) return reject(new Error('Falsy hookname not allowed'));
 
@@ -82,14 +80,14 @@ class Hook {
           if (error) {
             reject(error);
           } else {
-            resolve();
+            resolve(undefined);
           }
         },
       );
     });
   }
 
-  executeAfter(hookName, info, result) {
+  executeAfter<Info, Result>(hookName: string, info: Info, result: Result) {
     return new Promise((resolve, reject) => {
       if (!hookName) return reject(new Error('Falsy hookname not allowed'));
 
@@ -110,7 +108,7 @@ class Hook {
           if (error) {
             reject(error);
           } else {
-            resolve();
+            resolve(undefined);
           }
         },
       );
@@ -118,4 +116,4 @@ class Hook {
   }
 }
 
-module.exports = Hook;
+export default Hook;

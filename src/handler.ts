@@ -1,41 +1,30 @@
-const _ = require('lodash');
+import _ from 'lodash';
+import Hook from './utils/hooks';
+import type { ParserType, CallResultPayloadType, CallErrorPayload, CallPayloadType, CallResultSender, CallErrorSender, BuiltMessage } from './types'
 
-/**
- * This function returns the actual received  OCPP messages handler.
- * @param {Function} parser OCPP message parser function
- * @param {Object} sentCallsHandler It should have properties `success` and `error`, both functions
- * @param {Function} callHandler A function that handles received CALLS
- * @param {Function} sender A function that can send OCPP messages
- * @param {Object} builders It should have properties `callResult` and `callError`, both functions
- * @param {Hooks} hooks Instance of the Hooks class
- * @returns A handler function
- */
 function MessageHandler(
-  parser,
-  sentCallsHandler,
-  callHandler,
-  sender,
-  builders,
-  hooks,
+  parser: ParserType,
+  sentCallsHandler: { success(id: string, payload: CallResultPayloadType): void, failure(id: string, payload: CallErrorPayload): void },
+  callHandler: (action: string, payload: CallPayloadType, responders: { callResult: CallResultSender, callError: CallErrorSender }) => void,
+  sender: (message: string) => void,
+  builders: { callResult: (id: string, payload: CallPayloadType) => BuiltMessage, callError: (id: string, errorCode: string, errorDescription?: string, errorDetails?: any) => BuiltMessage },
+  hooks: Hook,
 ) {
   /**
    * Handler function that returns a thunk
    * @param {String} message The OCPP message received
    * @returns Thunk that when executed performs the actual task
    */
-  return function handler(message) {
+  return function handler(message: string) {
     const parsed = parser(message);
+
     switch (parsed.type) {
       case 'CALL':
         return () => {
-          const callResult = payload => {
+          const callResult = (payload: CallResultPayloadType) => {
             // Send response using the sender
-            const message2send = _.invoke(
-              builders,
-              'callResult',
-              parsed.id,
-              payload,
-            );
+            const message2send = builders.callResult(parsed.id, payload);
+
             hooks.execute(
               'sendCallRespond',
               () => {
@@ -47,16 +36,8 @@ function MessageHandler(
             );
           };
 
-          const callError = (code, description, details) => {
-            // Send response using the sender
-            const message2send = _.invoke(
-              builders,
-              'callError',
-              parsed.id,
-              code,
-              description,
-              details,
-            );
+          const callError = (code: string, description?: string, details?: any) => {
+            const message2send = builders.callError(parsed.id, code, description, details);
 
             hooks.execute(
               'sendCallError',
@@ -107,4 +88,4 @@ function MessageHandler(
   };
 }
 
-module.exports = MessageHandler;
+export default MessageHandler;

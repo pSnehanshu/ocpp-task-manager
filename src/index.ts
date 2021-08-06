@@ -1,32 +1,38 @@
-const _ = require('lodash');
-const retry = require('async-retry');
-const { nanoid } = require('nanoid');
-const SentCallsManager = require('./managers/sent');
-const ReceivedCallsManager = require('./managers/received');
-const transportLanguage = require('./utils/transportLanguage');
-const extractSender = require('./utils/extractSender');
-const getBuilders = require('./builder');
-const OCPPJParser = require('./parsers/json');
-const OCPPSParser = require('./parsers/soap');
-const MessageHandler = require('./handler');
-const Hooks = require('./utils/hooks');
+import _ from 'lodash';
+import retry from 'async-retry';
+import { nanoid } from 'nanoid';
+import SentCallsManager from './managers/sent';
+import ReceivedCallsManager from './managers/received';
+import transportLanguage from './utils/transportLanguage';
+import extractSender from './utils/extractSender';
+import getBuilders from './builder';
+import OCPPJParser from './parsers/json';
+import OCPPSParser from './parsers/soap';
+import MessageHandler from './handler';
+import Hooks from './utils/hooks';
+import type { CallPayloadType } from './types';
 
 const noopthunk = () => _.noop;
 
-function OCPPTaskManager(options) {
+interface OCPPTaskManagerOptions {
+  sender(): void;
+  callHandlers: Object;
+};
+
+function OCPPTaskManager(options: OCPPTaskManagerOptions) {
   const sentCallsHandler = SentCallsManager();
   const receivedCallsHandler = ReceivedCallsManager();
-  let currentVersion = null;
+  let currentVersion: (string | null) = null;
   let isConnected = false;
-  let msgHandler = noopthunk;
-  let builders = {};
+  let msgHandler: Function | void;
+  let builders;
   const hooks = new Hooks();
 
   const language = () => transportLanguage(currentVersion);
 
   // Configuring sender
   const sender = extractSender(options);
-  const send = message =>
+  const send = (message: string) =>
     hooks.execute('sendWsMsg', () => sender(message, currentVersion), {
       rawMsg: message,
     });
@@ -36,25 +42,26 @@ function OCPPTaskManager(options) {
     receivedCallsHandler.add(action, handler),
   );
 
-  function received(message) {
+  function received(message: string) {
     if (!isConnected) {
       throw new Error('Not connected yet, please call `connected()`');
     }
     // Handle this message
-    hooks.execute('messageReceived', msgHandler(message), {
+    hooks.execute('messageReceived', () => _.isFunction(msgHandler) && msgHandler(message)(), {
       rawMsg: message,
     });
   }
 
-  function connected(version) {
+  function connected(version: string) {
     isConnected = true;
     currentVersion = version;
     builders = getBuilders(currentVersion, () => nanoid(10));
     msgHandler = (() => {
-      let parser = _.noop;
+      let parser;
       const lang = language();
       if (lang === 'JSON') parser = OCPPJParser;
       else if (lang === 'SOAP') parser = OCPPSParser;
+      else throw new TypeError(`Invalid Transport Language: ${lang}`);
 
       return MessageHandler(
         parser,
@@ -70,7 +77,7 @@ function OCPPTaskManager(options) {
   function disconnected() {
     isConnected = false;
     currentVersion = null;
-    builders = {};
+    // builders = {};
     msgHandler = noopthunk;
   }
 
@@ -82,7 +89,7 @@ function OCPPTaskManager(options) {
    * @param {String} action
    * @param {Object} payload
    */
-  async function sendCall(action, payload) {
+  async function sendCall(action: string, payload: CallPayloadType) {
     return new Promise((resolve, reject) => {
       if (!isConnected) {
         return reject(
