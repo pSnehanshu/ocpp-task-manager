@@ -44,6 +44,10 @@ const device = OCPPTaskManager({
       // or with CALLERROR
       callError(errorCode, errorDesciption, errorDetails);
     },
+    // This is a catch-all handler, it is executed for any undefined action
+    '*': (payload, { callResult, callError }) => {
+      callError('NotImplemented');
+    },
   },
 });
 ```
