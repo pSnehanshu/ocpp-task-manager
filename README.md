@@ -199,4 +199,95 @@ ws.on('message', data => {
 });
 ```
 
-More examples coming soon...
+### OCPP server
+
+```javascript
+
+// Import the 'http' module
+const http = require('http');
+
+// Define the port number to listen on
+const port = 3000;
+
+// Create an HTTP server that listens on the specified port
+const server = http.createServer((req, res) => {
+  // Your buisness logic or http route handlers goes here
+  // Express handlers can be integrated here
+});
+
+// Start the server and listen on the specified port
+server.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}/`);
+});
+
+// The websocket server that will handle wesocket connections
+const wss = new WebSocket.Server({ noServer: true });
+
+server.on('upgrade', async (request, socket, head) => {
+  try {
+    // handle your websocket's upgrade process with your buisness logic
+    wss.handleUpgrade(request, socket, head, async ws => {
+      // Start the connection upgrade
+      // your buisness logic
+
+      // Emit connection event with your charger object
+      // Charger object may include various properties like chargerId, name etc
+      // Charger object is completely flexible to implement based on your buisness needs
+      wss.emit('connection', ws, request, { charger });
+    })
+  } catch (err) {
+    console.log('error', err);
+  }
+})
+
+wss.on("connection", async (ws, request, charger) => {
+  // Some other buisness logic
+
+  // create new OCPP task manager
+  const device = OCPPTaskManager({
+    sender: message => {
+      // send message through WebSocket
+      ws.send(message);
+    },
+    callHandlers: {
+      BootNotification: (payload, { callResult, callError }) => {
+        // `payload` hold the payload received with the CALL
+        // do anything you want with it, although you might want to first sit and plan
+
+        // You may either respond with a CALLRESULT
+        callResult({
+          currentTime: new Date().toISOString(),
+          interval: 30,
+          status: 'Accepted',
+        });
+        // or with CALLERROR
+        callError('InternalError');
+      },
+      // This is a catch-all handler, it is executed for any undefined action
+      '*': (payload, { callResult, callError }) => {
+        callError('NotImplemented');
+      },
+    }
+  });
+
+  // device connected with selected OCPP version
+  device.connected(selectedOcppVersionOnBothSide);
+
+  ws.on("close", (code, reason) => {
+    // Any other buisness logic
+    // ...
+    // Inform OCPP Task manager that the connection has been closed
+    device.disconnected();
+    // close WebSocket connection
+    ws.close();
+  })
+
+  ws.on('message', data => {
+    // when message is received through WebSocket
+    // pass message to device
+    device.received(data);
+  });
+})
+
+
+```
